@@ -1,0 +1,40 @@
+{
+  "name": "define-style-fixer-js",
+  "displayName": "DEFINE Style Fixer (JS)",
+  "description": "Приводит имена #define к ALL_CAPS_WITH_UNDERSCORES и переименовывает их использования в файле.",
+  "version": "0.0.1",
+  "publisher": "Artem037",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Linters",
+    "Other"
+  ],
+  "activationEvents": [
+    "onLanguage:c",
+    "onLanguage:cpp",
+    "onLanguage:objective-c",
+    "onLanguage:objective-cpp"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "defineStyleFixer.fixFile",
+        "title": "Define Style Fixer: Fix Current File"
+      }
+    ],
+    "configuration": {
+      "type": "object",
+      "title": "Define Style Fixer (JS)",
+      "properties": {
+        "defineStyleFixer.uppercaseParams": {
+          "type": "boolean",
+          "default": false,
+          "description": "Приводить параметры функциональных макросов к UPPER_SNAKE_CASE."
+        }
+      }
+    }
+  }
+}
