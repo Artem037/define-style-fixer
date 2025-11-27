@@ -54,7 +54,7 @@ int main() {
 ## Код плагина в `extension.js`:
 
 - `toUpperSnake(raw)` - переводит строку в формат `UPPER_SNAKE_CASE`
-- `collectDefineEdits(document, options)` - находит все `#define` в документе, строит список правок и заменяет:
+- `collectDefineEdits(document)` - находит все `#define` в документе, строит список правок и заменяет:
   - имена в строках `#define`
   - все использования макросов в остальном тексте файла
 - `activate(context)` - точка входа расширения, регистрирует команду `defineStyleFixer.fixFile` и применяет правки к активному редактору
