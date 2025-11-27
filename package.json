@@ -24,17 +24,6 @@
         "command": "defineStyleFixer.fixFile",
         "title": "Define Style Fixer: Fix Current File"
       }
-    ],
-    "configuration": {
-      "type": "object",
-      "title": "Define Style Fixer (JS)",
-      "properties": {
-        "defineStyleFixer.uppercaseParams": {
-          "type": "boolean",
-          "default": false,
-          "description": "Приводить параметры функциональных макросов к UPPER_SNAKE_CASE."
-        }
-      }
-    }
+    ]
   }
 }

@@ -1,7 +1,7 @@
 const vscode = require('vscode');
 
 /**
- * преобразует имя макроса к виду UPPER_SNAKE_CASE
+ * Преобразует имя макроса к виду UPPER_SNAKE_CASE
  */
 function toUpperSnake(raw) {
   if (!raw) {
@@ -15,32 +15,20 @@ function toUpperSnake(raw) {
 }
 
 /**
- * при необходимости приводит имена параметров макроса к тому же стилю
- * пример: (x, y_val) -> (X, Y_VAL)
+ * Строит список правок для документа:
+ * - приводит имена в #define к нужному виду;
+ * - заменяет все использования этих макросов в файле.
  */
-function uppercaseParamsIfNeeded(params, enabled) {
-  if (!params || !enabled) {
-    return params;
-  }
-
-  return params.replace(/[A-Za-z_][A-Za-z0-9_]*/g, (match) => {
-    return toUpperSnake(match);
-  });
-}
-
-/**
- * 1) приводит имена макросов к нужному виду
- * 2) заменяет все использования этих макросов в файле
- */
-function collectDefineEdits(document, options) {
+function collectDefineEdits(document) {
   const edits = [];
 
-  const DEFINE_RE = /^\s*#\s*define\s+([A-Za-z_][A-Za-z0-9_]*)(\s*\([^)]*\))?/;
+  // Ищем строку вида: #define ИМЯ ...
+  const DEFINE_RE = /^\s*#\s*define\s+([A-Za-z_][A-Za-z0-9_]*)/;
 
-  const renameMap = {};
-  const defineLines = new Set();
+  const renameMap = {}; // oldName -> newName
+  const defineLines = new Set(); // номера строк с #define
 
-  // ищем все макросы и запоминаем, на что их заменять
+  // Первый проход: ищем все #define и запоминаем, как их переименовать.
   for (let lineNum = 0; lineNum < document.lineCount; lineNum++) {
     const line = document.lineAt(lineNum);
     const text = line.text;
@@ -53,36 +41,19 @@ function collectDefineEdits(document, options) {
     defineLines.add(lineNum);
 
     const name = match[1];
-    const params = match[2] || undefined;
-
     const targetName = toUpperSnake(name);
-    const targetParams = uppercaseParamsIfNeeded(
-      params,
-      options.uppercaseParams
-    );
 
     if (targetName !== name) {
       renameMap[name] = targetName;
-    }
 
-    if (targetName !== name) {
       const nameStartChar = text.indexOf(name);
       const nameEndChar = nameStartChar + name.length;
       const nameRange = new vscode.Range(
         new vscode.Position(lineNum, nameStartChar),
         new vscode.Position(lineNum, nameEndChar)
       );
-      edits.push(new vscode.TextEdit(nameRange, targetName));
-    }
 
-    if (params && targetParams && targetParams !== params) {
-      const paramsStart = text.indexOf(params);
-      const paramsEnd = paramsStart + params.length;
-      const paramsRange = new vscode.Range(
-        new vscode.Position(lineNum, paramsStart),
-        new vscode.Position(lineNum, paramsEnd)
-      );
-      edits.push(new vscode.TextEdit(paramsRange, targetParams));
+      edits.push(new vscode.TextEdit(nameRange, targetName));
     }
   }
 
@@ -92,7 +63,7 @@ function collectDefineEdits(document, options) {
     return edits;
   }
 
-  // заменяем использования макросов в остальных строках
+  // Второй проход: заменяем использования макросов в остальных строках.
   for (let lineNum = 0; lineNum < document.lineCount; lineNum++) {
     const line = document.lineAt(lineNum);
     const text = line.text;
@@ -120,6 +91,7 @@ function collectDefineEdits(document, options) {
     }
   }
 
+  // Сортируем правки с конца файла к началу.
   edits.sort((a, b) => {
     const aStart = a.range.start;
     const bStart = b.range.start;
@@ -135,7 +107,7 @@ function collectDefineEdits(document, options) {
 }
 
 /**
- * активация расширения
+ * Активация расширения.
  */
 function activate(context) {
   const disposable = vscode.commands.registerCommand(
@@ -148,12 +120,7 @@ function activate(context) {
         return;
       }
 
-      const config = vscode.workspace.getConfiguration('defineStyleFixer');
-      const uppercaseParams = config.get('uppercaseParams', false);
-
-      const edits = collectDefineEdits(editor.document, {
-        uppercaseParams,
-      });
+      const edits = collectDefineEdits(editor.document);
 
       if (edits.length === 0) {
         vscode.window.showInformationMessage(
